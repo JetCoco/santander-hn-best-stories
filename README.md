@@ -51,7 +51,7 @@ Swagger (Development): http://localhost:5091/swagger
 
 
 ## 🏗️ Project structure
-
+```
 HnBestStories/
 ├─ Controllers/
 │  └─ BestStoriesController.cs      # GET /api/stories/best
@@ -62,26 +62,43 @@ HnBestStories/
 │  └─ HnService.cs                  # Cache, retries, concurrency limiting
 ├─ Program.cs                       # DI + middleware pipeline
 └─ HnBestStories.csproj
+```
 
 
 ## ⚙️ Implementation (technical summary)
 
 HttpClientFactory: typed client IHnService, HnService with 5s timeout.
+
 Polly v7:
+
 WaitAndRetryAsync(3) with exponential backoff.
+
 (Circuit breaker can be added as an enhancement.)
+
 IMemoryCache:
+
 Cache HN beststories IDs for 60s.
+
 Cache each item/{id} for 5 min (with 2 min sliding).
+
 Concurrency limit: SemaphoreSlim(12) to avoid hammering HN.
+
 Sorting: explicitly sort by score desc before returning.
+
 Validation: count must be in 1..100 (400 if invalid).
+
 Swagger enabled in Development.
-Tunable values (see Services/HnService.cs / Program.cs):
+
+Tunables (see Services/HnService.cs / Program.cs):
+
 BestIdsTtl = 60s
+
 ItemTtl = 5min
+
 Gate = new SemaphoreSlim(12)
+
 Polly retries: 3 attempts, 200ms * 2^n
+
 HttpClient.Timeout = 5s
 
 ## 📝 Assumptions
@@ -94,7 +111,7 @@ time is exposed in ISO-8601.
 ## ▶️ Quick start
 
 dotnet run --project HnBestStories
-# then open:
+then open:
 #   http://localhost:5091/swagger
-# or:
+or:
 curl "http://localhost:5091/api/stories/best?count=10"
