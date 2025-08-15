@@ -25,50 +25,30 @@ GET /api/stories/best?count={n}
     "commentCount": 572
   }
 ]
-Field mapping (from HN item):
+
+**Field mapping (from HN item):**
 
 title ← item.title
-
 uri ← item.url
-
 postedBy ← item.by
-
 time (UNIX → ISO-8601) ← item.time
-
 score ← item.score
-
 commentCount ← item.descendants
 
 
-🧰 Requirements
+**🧰 Requirements**
 .NET 8 SDK
-
-(Optional) Docker 24+
-
 (Optional) VS Code with extensions: C# Dev Kit, REST Client / Thunder Client
 
-🚀 Run locally
+**🚀 Run locally**
 
 cd HnBestStories
 dotnet restore
 dotnet run
 Swagger (Development): http://localhost:5091/swagger
 
-Quick test:
 
-curl "http://localhost:5091/api/stories/best?count=5"
-HTTPS redirect warning
-If you see Failed to determine the https port for redirect:
-
-Either disable app.UseHttpsRedirection() in Program.cs, or
-
-Configure local HTTPS:
-
-dotnet dev-certs https --trust
-dotnet run --urls "http://localhost:5091;https://localhost:7091"
-Then use: https://localhost:7091/swagger
-
-🏗️ Project structure
+**🏗️ Project structure**
 
 HnBestStories/
 ├─ Controllers/
@@ -80,7 +60,9 @@ HnBestStories/
 │  └─ HnService.cs                  # Cache, retries, concurrency limiting
 ├─ Program.cs                       # DI + middleware pipeline
 └─ HnBestStories.csproj
-⚙️ Implementation (technical summary)
+
+
+**⚙️ Implementation (technical summary)**
 HttpClientFactory: typed client IHnService, HnService with 5s timeout.
 
 Polly v7:
@@ -115,7 +97,7 @@ Polly retries: 3 attempts, 200ms * 2^n
 
 HttpClient.Timeout = 5s
 
-📝 Assumptions
+**📝 Assumptions**
 count limited to 1..100 to protect both the upstream API and this service.
 
 TTLs chosen to balance freshness and efficiency (IDs 60s; items 5min).
@@ -124,7 +106,7 @@ Only returns items with Type == "story".
 
 time is exposed in ISO-8601.
 
-▶️ Quick start
+**▶️ Quick start**
 
 dotnet run --project HnBestStories
 # then open:
