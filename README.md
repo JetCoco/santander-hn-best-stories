@@ -14,7 +14,6 @@ GET /api/stories/best?count={n}
 - `count` (required): allowed range `1..100`.
 
 **Response (JSON)**
-```json
 [
   {
     "title": "A uBlock Origin update was rejected from the Chrome Web Store",
@@ -25,6 +24,7 @@ GET /api/stories/best?count={n}
     "commentCount": 572
   }
 ]
+
 
 Field mapping (from HN item):
 title ← item.title, uri ← item.url, postedBy ← item.by,
