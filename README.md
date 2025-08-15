@@ -1,16 +1,19 @@
-# HnBestStories – Hacker News Best n Stories API (ASP.NET Core .NET 8)
+# HnBestStories – Hacker News “Best _n_ Stories” API (ASP.NET Core .NET 8)
 
-API REST que devuelve las **mejores _n_ historias** de Hacker News (ordenadas por `score` descendente), consumiendo la API pública de HN y **evitando sobrecargarla** mediante cache, concurrencia limitada y reintentos.
+A minimal REST API that returns the **best _n_ stories** from Hacker News, sorted by **descending `score`**.  
+It consumes the public HN API and avoids overloading it via caching, limited concurrency, and retries.
+
+---
 
 ## ✨ Endpoint
 
 GET /api/stories/best?count={n}
 
 
-**Parámetros**
-- `count` (query): requerido. Rango permitido `1..100`.
+**Query parameters**
+- `count` (required): allowed range `1..100`.
 
-**Respuesta (JSON)**
+**Response (JSON)**
 ```json
 [
   {
@@ -22,70 +25,75 @@ GET /api/stories/best?count={n}
     "commentCount": 572
   }
 ]
-Campos mapeados desde HN: title←item.title, uri←item.url, postedBy←item.by,
-time (UNIX→ISO-8601) ←item.time, score←item.score, commentCount←item.descendants.
 
-🧰 Requisitos
+Field mapping (from HN item):
+title ← item.title, uri ← item.url, postedBy ← item.by,
+time (UNIX → ISO-8601) ← item.time, score ← item.score, commentCount ← item.descendants.
+
+🧰 Requirements
 .NET 8 SDK
 
-(Opcional) Docker 24+
+(Optional) Docker 24+
 
-(Opcional) VS Code con extensiones: C# Dev Kit, REST Client/Thunder Client.
+(Optional) VS Code with extensions: C# Dev Kit, REST Client / Thunder Client
 
-🚀 Ejecutar en local
+🚀 Run locally
+
 cd HnBestStories
 dotnet restore
 dotnet run
-Swagger (desarrollo): http://localhost:5091/swagger
+Swagger (Development): http://localhost:5091/swagger
 
-Ejemplo con curl:
+Quick test:
 
 curl "http://localhost:5091/api/stories/best?count=5"
-Si ves el warning Failed to determine the https port for redirect:
+HTTPS redirect warning
+If you see Failed to determine the https port for redirect:
 
-O desactiva app.UseHttpsRedirection() en Program.cs, o
+Either disable app.UseHttpsRedirection() in Program.cs, or
 
-Configura HTTPS local:
+Configure local HTTPS:
 
 dotnet dev-certs https --trust
 dotnet run --urls "http://localhost:5091;https://localhost:7091"
-Swagger: https://localhost:7091/swagger
+Then use: https://localhost:7091/swagger
 
-🏗️ Estructura del proyecto
+🏗️ Project structure
 
 HnBestStories/
 ├─ Controllers/
-│  └─ BestStoriesController.cs         # GET /api/stories/best
+│  └─ BestStoriesController.cs      # GET /api/stories/best
 ├─ Dtos/
-│  └─ StoryDto.cs                      # Contrato de salida
+│  └─ StoryDto.cs                   # Output contract
 ├─ Services/
-│  ├─ IHnService.cs                    # Abstracción del servicio HN
-│  └─ HnService.cs                     # Implementación: cache, polly, concurrencia
-├─ Program.cs                          # Composition Root (DI + pipeline)
+│  ├─ IHnService.cs                 # HN service abstraction
+│  └─ HnService.cs                  # Cache, retries, concurrency limiting
+├─ Program.cs                       # DI + middleware pipeline
 └─ HnBestStories.csproj
-
-⚙️ Implementación (resumen técnico)
-HttpClientFactory: cliente tipado IHnService, HnService con timeout de 5s.
+⚙️ Implementation (technical summary)
+HttpClientFactory: typed client IHnService, HnService with 5s timeout.
 
 Polly v7:
 
-WaitAndRetryAsync(3) con backoff exponencial.
+WaitAndRetryAsync(3) with exponential backoff.
+
+(Circuit breaker can be added as an enhancement.)
 
 IMemoryCache:
 
-Cachea IDs de beststories por 60s.
+Cache HN beststories IDs for 60s.
 
-Cachea cada item/{id} por 5 min (con SlidingExpiration 2 min).
+Cache each item/{id} for 5 min (with 2 min sliding).
 
-Concurrencia limitada: SemaphoreSlim(12) para no saturar a HN.
+Concurrency limit: SemaphoreSlim(12) to avoid hammering HN.
 
-Orden: se ordena por score desc antes de retornar (por robustez).
+Sorting: explicitly sort by score desc before returning.
 
-Validación: count entre 1 y 100 (400 si inválido).
+Validation: count must be in 1..100 (400 if invalid).
 
-Swagger habilitado en Development.
+Swagger enabled in Development.
 
-Valores clave que puedes ajustar en Services/HnService.cs:
+Tunable values (see Services/HnService.cs / Program.cs):
 
 BestIdsTtl = 60s
 
@@ -93,22 +101,23 @@ ItemTtl = 5min
 
 Gate = new SemaphoreSlim(12)
 
-Retries Polly (3 intentos, backoff 200ms*2^n)
+Polly retries: 3 attempts, 200ms * 2^n
 
-HttpClient.Timeout = 5s (en Program.cs)
+HttpClient.Timeout = 5s
 
-📝 Supuestos
-count limitado a 1..100 para proteger al upstream y la API.
+📝 Assumptions
+count limited to 1..100 to protect both the upstream API and this service.
 
-TTLs: IDs 60s; items 5min (balance entre frescura y eficiencia).
+TTLs chosen to balance freshness and efficiency (IDs 60s; items 5min).
 
-El endpoint solo devuelve historias (Type == "story").
+Only returns items with Type == "story".
 
-time se expone en ISO-8601.
+time is exposed in ISO-8601.
 
-▶️ Cómo correr rápidamente
+▶️ Quick start
 
 dotnet run --project HnBestStories
-# luego abre http://localhost:5091/swagger
-# o:
+# then open:
+#   http://localhost:5091/swagger
+# or:
 curl "http://localhost:5091/api/stories/best?count=10"
