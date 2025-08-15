@@ -66,7 +66,7 @@ HnBestStories/
 
 
 ## ⚙️ Implementation (technical summary)
-
+```
 HttpClientFactory: typed client IHnService, HnService with 5s timeout.
 
 Polly v7:
@@ -100,6 +100,8 @@ Gate = new SemaphoreSlim(12)
 Polly retries: 3 attempts, 200ms * 2^n
 
 HttpClient.Timeout = 5s
+```
+
 
 ## 📝 Assumptions
 
