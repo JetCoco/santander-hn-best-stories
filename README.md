@@ -24,7 +24,8 @@ GET /api/stories/best?count={n}
     "score": 1716,
     "commentCount": 572
   }
-]```
+]
+```
 
 ### Field mapping (from HN item):
 
